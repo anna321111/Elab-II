@@ -7,7 +7,7 @@ from collections import defaultdict
 with open('Data/supermarketjson.json') as f:
     data = json.load(f)
 
-# Create a list to store dictionaries containing the sums
+# Create a list to store dictionaries containing the sums and counts
 rows_data = []
 
 # Iterate over each row in the JSON data
@@ -17,13 +17,16 @@ for row in data:
     # Calculate the sum of third values in the row (tour_price_sum)
     tour_price_sum = sum(t[2] for t in row if len(t) >= 3)  # Ensure tuple has at least 3 elements
 
-    # Store the sums in a dictionary
-    row_data = {'Time': tour_time_sum, 'Price': tour_price_sum}
+    # Count the number of tuples in the row
+    num_items = len(row)
+
+    # Store the sums and counts in a dictionary
+    row_data = {'Time': tour_time_sum, 'Price': tour_price_sum, 'Items': num_items}
     rows_data.append(row_data)
 
 # Write the data to a CSV file
 with open('metrics.csv', 'w', newline='') as csvfile:
-    fieldnames = ['Time', 'Price']
+    fieldnames = ['Time', 'Price', 'Items']  # Add 'Items' to the fieldnames
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
     # Write the header
@@ -95,7 +98,7 @@ for row, count in zip(existing_data, row_follow_up_counts):
 
 # Write the modified data back to the CSV file
 with open('metrics.csv', 'w', newline='') as csvfile:
-    fieldnames = ['Time', 'Price', 'MCFU']
+    fieldnames = ['Time', 'Price', 'Items', 'MCFU']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
     # Write the header
@@ -104,3 +107,4 @@ with open('metrics.csv', 'w', newline='') as csvfile:
     # Write each modified row
     for row in existing_data:
         writer.writerow(row)
+
