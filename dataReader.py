@@ -76,7 +76,7 @@ def normalize_and_subset_csv(input_filename, output_filename, max_rows=10000):
         writer.writerow(['tripnumber', 'purchasenumber', 'departmentnumber', 'timebetween', 'price'])
         writer.writerows(subset_data)
 
-input_filename = 'supermarket.csv'
+input_filename = 'supermarket_fixed2.csv'
 output_filename = 'supermarket_enhanced.csv'
 process_csv_to_enhanced_csv(input_filename, output_filename)
 
