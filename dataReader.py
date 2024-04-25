@@ -1,80 +1,85 @@
 import csv
 import os
-import json
 import numpy as np
 
-def process_csv_to_json(input_filename, output_filename):
+def process_csv_to_enhanced_csv(input_filename, output_filename):
     directory = 'Data'
     input_file_path = os.path.join(directory, input_filename)
     output_file_path = os.path.join(directory, output_filename)
 
-    # Open the input CSV file
     with open(input_file_path, mode='r', newline='') as file:
         reader = csv.reader(file)
         data = []
 
+        # Initialize trip counter
+        tripnumber = 1
+
         # Process each row
         for row in reader:
-            row_data = []  # List to hold processed data for the current row
+            purchasenumber = 1  # Initialize purchase counter for the row
             for item in row:
-                # Process each item by splitting on spaces and converting to numeric types if needed
+                # Split each item (which is a triple) and expand it with tripnumber and purchasenumber
                 elements = item.split()
-                converted_elements = [float(element) if '.' in element else int(element) for element in elements]
-                row_data.append(converted_elements)
-            data.append(row_data)  # Append the whole list of lists for this row to data
+                if elements:
+                    departmentnumber, timebetween, price = int(elements[0]), float(elements[1]), float(elements[2])
+                    # Append the expanded data to a list
+                    data.append([tripnumber, purchasenumber, departmentnumber, timebetween, price])
+                    purchasenumber += 1
+            tripnumber += 1  # Increment the trip counter after processing each row
 
-    # Write the processed data to a JSON file
+    # Write the processed data back to a new CSV file
     with open(output_file_path, mode='w', newline='') as file:
-        json.dump(data, file, indent=4)  # Use indent for better readability in the JSON file
+        writer = csv.writer(file)
+        # Write header
+        writer.writerow(['tripnumber', 'purchasenumber', 'departmentnumber', 'timebetween', 'price'])
+        # Write data
+        writer.writerows(data)
 
-
-def normalize_and_sample_json(input_filename, output_filename, sample_size):
+def normalize_and_subset_csv(input_filename, output_filename, max_rows=10000):
     directory = 'Data'
-    json_file_path = os.path.join(directory, input_filename)
+    input_file_path = os.path.join(directory, input_filename)
     output_file_path = os.path.join(directory, output_filename)
 
-    with open(json_file_path, 'r') as file:
-        data = json.load(file)
+    with open(input_file_path, 'r', newline='') as file:
+        reader = csv.reader(file)
+        next(reader)  # Skip header
+        full_data = [row for row in reader]
 
-    normalized_data = []
-    for trip in data:
-        if trip:  # Check if the trip list is not empty
-            # Ensure all sublists in the trip have the same length by padding shorter ones
-            max_len = max(len(item) for item in trip if item)  # Find the maximum length of sublists
-            padded_trip = [item + [0]*(max_len - len(item)) for item in trip if item]  # Pad shorter lists
+    # Convert data to numpy array for easier manipulation
+    data_array = np.array(full_data, dtype=float)
 
-            # Convert the trip data to numpy array
-            trip_array = np.array(padded_trip)
+    # Normalize 'timebetween' and 'price' columns
+    timebetween_col = 3
+    price_col = 4
+    means = np.mean(data_array[:, [timebetween_col, price_col]], axis=0)
+    stds = np.std(data_array[:, [timebetween_col, price_col]], axis=0)
+    data_array[:, [timebetween_col, price_col]] = (data_array[:, [timebetween_col, price_col]] - means) / stds
 
-            # Normalize the data: mean=0, std=1
-            means = np.mean(trip_array, axis=0)
-            stds = np.std(trip_array, axis=0)
-            normalized_trip = (trip_array - means) / stds
+    # Subset data ensuring complete trips
+    unique_trips = np.unique(data_array[:, 0])
+    subset_data = []
+    current_rows = 0
 
-            # Append the normalized trip to normalized_data if it's not empty
-            if normalized_trip.size > 0:
-                normalized_data.append(normalized_trip.tolist())
+    for trip in unique_trips:
+        trip_data = data_array[data_array[:, 0] == trip]
+        if current_rows + len(trip_data) > max_rows:
+            break
+        subset_data.append(trip_data)
+        current_rows += len(trip_data)
 
-    # Sample from the normalized data
-    sampled_data_list = []
-    if len(normalized_data) > sample_size:
-        indices = np.random.choice(len(normalized_data), size=sample_size, replace=False)
-        sampled_data_list = [normalized_data[index] for index in indices if len(normalized_data[index]) > 0]
-    else:
-        sampled_data_list = [trip for trip in normalized_data if len(trip) > 0]
+    # Flatten list of arrays to a single array
+    subset_data = np.vstack(subset_data)
 
-    # Save the sampled data to a JSON file
-    with open(output_file_path, mode='w') as file:
-        json.dump(sampled_data_list, file, indent=4)
+    # Write normalized and subset data back to a new CSV
+    with open(output_file_path, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['tripnumber', 'purchasenumber', 'departmentnumber', 'timebetween', 'price'])
+        writer.writerows(subset_data)
 
-    return sampled_data_list
-
-
-# Uncomment these lines to execute the processing and normalization steps
 input_filename = 'supermarket.csv'
-output_filename1 = 'supermarketjson.json'
-output_filename2 = 'supermarketjsonnormal.json'
-process_csv_to_json(input_filename, output_filename1)
-normalized_sample = normalize_and_sample_json(output_filename1, output_filename2, 1000)
-print(normalized_sample)
+output_filename = 'supermarket_enhanced.csv'
+process_csv_to_enhanced_csv(input_filename, output_filename)
 
+input_filename = 'supermarket_enhanced.csv'
+output_filename = 'supermarket_normalized_subset.csv'
+normalize_and_subset_csv(input_filename, output_filename)

@@ -25,7 +25,7 @@ for row in data:
     rows_data.append(row_data)
 
 # Write the data to a CSV file
-with open('metrics.csv', 'w', newline='') as csvfile:
+with open('Data/metrics.csv', 'w', newline='') as csvfile:
     fieldnames = ['Time', 'Price', 'Items']  # Add 'Items' to the fieldnames
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -87,7 +87,7 @@ for identifier, common_follow_up in most_common_follow_up.items():
 
 # Read existing data from the CSV file
 existing_data = []
-with open('metrics.csv', 'r', newline='') as csvfile:
+with open('Data/metrics.csv', 'r', newline='') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         existing_data.append(row)
@@ -97,7 +97,7 @@ for row, count in zip(existing_data, row_follow_up_counts):
     row['MCFU'] = count
 
 # Write the modified data back to the CSV file
-with open('metrics.csv', 'w', newline='') as csvfile:
+with open('Data/metrics.csv', 'w', newline='') as csvfile:
     fieldnames = ['Time', 'Price', 'Items', 'MCFU']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
