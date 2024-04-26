@@ -6,7 +6,6 @@ from sklearn.cluster import KMeans
 from sklearn.impute import SimpleImputer
 
 def plot_clusters(data, labels, centroids):
-    # Generate unique colors using a colormap
     colors = plt.cm.get_cmap('viridis', max(labels) + 1)
     plt.figure(figsize=(10, 6))
     scatter = plt.scatter(data[:, 0], data[:, 1], c=labels, cmap=colors)
@@ -19,28 +18,37 @@ def plot_clusters(data, labels, centroids):
     plt.show()
 
 def load_and_process_data(csv_filename):
-    # Define the directory containing the CSV file
     directory = 'Data'
     csv_file_path = os.path.join(directory, csv_filename)
-
-    # Read the CSV file using pandas
     df = pd.read_csv(csv_file_path)
-
-    # Group by 'tripnumber' and compute the mean of 'timebetween' and 'price'
-    # Correcting from tuple to list for column names
     grouped_df = df.groupby('tripnumber')[['timebetween', 'price']].mean().reset_index(drop=True)
-
-    # Convert the grouped DataFrame to a numpy array and handle NaN values
     np_data = grouped_df.to_numpy()
     imputer = SimpleImputer(strategy='mean')
-    cleaned_data = imputer.fit_transform(np_data)  # Impute any NaN values if present
+    cleaned_data = imputer.fit_transform(np_data)
     return cleaned_data
 
+def plot_elbow_method(data):
+    wcss = []
+    for i in range(1, 11):
+        kmeans = KMeans(n_clusters=i, random_state=42)
+        kmeans.fit(data)
+        wcss.append(kmeans.inertia_)
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(1, 11), wcss, marker='o')
+    plt.title('Elbow Method')
+    plt.xlabel('Number of clusters')
+    plt.ylabel('WCSS')
+    plt.xticks(range(1, 11))
+    plt.grid(True)
+    plt.show()
+
 # Example usage
-data = load_and_process_data('supermarket_normalized_subset.csv')  # Ensure you provide the correct filename
+data = load_and_process_data('supermarket_normalized_subset.csv')
 print(data)
 if data.size > 0:
-    kmeans = KMeans(n_clusters=2, random_state=42).fit(data)
+    plot_elbow_method(data)  # Plotting the elbow curve
+    kmeans = KMeans(n_clusters=3, random_state=42).fit(data)  # Example with 2 clusters, adjust based on elbow plot
     plot_clusters(data, kmeans.labels_, kmeans.cluster_centers_)
 else:
     print("No data to cluster.")
+
