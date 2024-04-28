@@ -1,6 +1,6 @@
 import pandas as pd
-import numpy as np
 from collections import defaultdict
+import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -32,23 +32,34 @@ def build_network(csv_file_path):
     return edges_info
 
 def visualize_network(edges_info, min_trips=500, output_file='network_visualization.png'):
+    # Mapping of department numbers to names
+    department_names = {
+        1: "Bakery & Pastry", 2: "Beer & Wine", 3: "Books & Magazines", 4: "Candy & Chips",
+        5: "Care & Hygiene", 6: "Cereals & Spreads", 7: "Cheese & Tapas", 8: "Dairy & Eggs",
+        9: "Freezer", 10: "Fruit & Vegetables", 11: "Household & Pet", 12: "Meat & Fish",
+        13: "Pasta & Rice", 14: "Salads & Meals", 15: "Sauces & Spices", 16: "Soda & Juices",
+        17: "Special Diet", 18: "Vegetarian & Vegan"
+    }
+
     G = nx.DiGraph()
     for (source, target), info in edges_info.items():
         if info['total_trips'] >= min_trips:
             G.add_edge(source, target, weight=info['total_trips'])
 
-    pos = nx.kamada_kawai_layout(G)
+    pos = nx.kamada_kawai_layout(G, scale=2)  # Adjust layout scale
     weights = [info['weight'] for u, v, info in G.edges(data=True)]
 
     if not weights:
         print("No edges with the minimum number of trips were found.")
         return
 
-    plt.figure(figsize=(12, 12))
-    nx.draw(G, pos, with_labels=True, node_color='lightblue', node_size=500,
+    plt.figure(figsize=(18, 18))
+    nx.draw(G, pos, labels={node: department_names.get(node, str(node)) for node in G.nodes()},
+            with_labels=True, node_color='lightblue', node_size=10000,  # Significantly increased node size
             font_size=8, edge_color='grey', width=[(weight/max(weights))*5 for weight in weights])
     plt.savefig(output_file, format='png', dpi=300, bbox_inches='tight')
     plt.show()
+
 
 def flag_suspicious_purchases(csv_file_path, edges_info):
     df = pd.read_csv(csv_file_path)[:1000]
@@ -71,6 +82,7 @@ def flag_suspicious_purchases(csv_file_path, edges_info):
     return df
 
 edges_info = build_network('Data/supermarket_enhanced.csv')
-flagged_df = flag_suspicious_purchases('Data/supermarket_enhanced.csv', edges_info)
-flagged_df.to_csv('Data/supermarket_flagged.csv', index=False)
+visualize_network(edges_info)
+#flagged_df = flag_suspicious_purchases('Data/supermarket_enhanced.csv', edges_info)
+#flagged_df.to_csv('Data/supermarket_flagged.csv', index=False)
 
