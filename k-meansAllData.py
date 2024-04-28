@@ -2,6 +2,8 @@ from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+from yellowbrick.cluster import SilhouetteVisualizer
+from sklearn.metrics import silhouette_score
 
 def plot_clusters(data, labels, centroids):
     # Generate unique colors using a colormap
@@ -41,11 +43,31 @@ def plot_elbow_method(data):
     plt.grid(True)
     plt.show()
 
+
+def plot_silhouette_method(data):
+    fig, ax = plt.subplots(3, 2, figsize=(15, 15))
+    avg_scores = []
+    for i, n_clusters in enumerate([2, 3, 4, 5, 6, 7]):
+        km = KMeans(n_clusters=n_clusters, init='k-means++', n_init=10, max_iter=100, random_state=42)
+        q, mod = divmod(i, 2)
+        visualizer = SilhouetteVisualizer(km, colors='yellowbrick', ax=ax[q][mod])
+        visualizer.fit(data)
+
+        # Calculate silhouette score
+        score = silhouette_score(data, km.labels_)
+        avg_scores.append(score)
+
+    # Output average silhouette scores
+    for i, score in enumerate(avg_scores):
+        print(f"Average silhouette score for {i + 2} clusters: {score}")
+
+
 # Example usage
 data = load_data('supermarket_normalized_subset.csv')
 if data.size > 0:
     plot_elbow_method(data)  # Plotting the elbow curve to find optimal number of clusters
-    optimal_clusters = 3  # Replace this with the number from the elbow plot if different
+    plot_silhouette_method(data)  # Plotting silhouette scores for different cluster sizes
+    optimal_clusters = 5  # Replace this with the number from the elbow plot if different
     kmeans = KMeans(n_clusters=optimal_clusters, random_state=42).fit(data)
     plot_clusters(data, kmeans.labels_, kmeans.cluster_centers_)
 else:
