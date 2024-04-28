@@ -1,7 +1,7 @@
 import json
 import csv
 from collections import Counter
-from collections import defaultdict
+import pandas as pd
 
 # Read the JSON file
 with open('Data/supermarketjson.json') as f:
@@ -107,4 +107,32 @@ with open('Data/metrics.csv', 'w', newline='') as csvfile:
     # Write each modified row
     for row in existing_data:
         writer.writerow(row)
+
+
+
+
+
+# Read the original CSV file without header and skipping the first row
+original_df = pd.read_csv('Data/supermarket_enhanced.csv', header=None, skiprows=1)
+
+# Group the DataFrame by the trip number (1st column) and concatenate the values in the 3rd column
+all_paths = original_df.groupby(0)[2].apply(tuple).tolist()
+
+# Count the occurrences of each path
+path_counts = Counter(all_paths)
+
+# Filter out paths with counter less than 6
+filtered_paths = {path: count for path, count in path_counts.items() if count >= 6}
+
+# Convert the filtered paths to a DataFrame
+path_counts_df = pd.DataFrame(list(filtered_paths.items()), columns=['Path', 'Count'])
+
+# Sort path_counts_df by count in descending order
+path_counts_df = path_counts_df.sort_values(by='Count', ascending=False)
+
+# Write the result to a new CSV file
+path_counts_df.to_csv('Data/common_paths.csv', index=False)
+
+
+
 
