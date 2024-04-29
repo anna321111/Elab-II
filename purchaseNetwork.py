@@ -31,7 +31,7 @@ def build_network(csv_file_path):
 
     return edges_info
 
-def visualize_network(edges_info, min_trips=500, output_file='network_visualization.png'):
+def visualize_network(edges_info, min_trips=500, output_file='Plots/network_visualization.png'):
     # Mapping of department numbers to names
     department_names = {
         1: "Bakery & Pastry", 2: "Beer & Wine", 3: "Books & Magazines", 4: "Candy & Chips",
@@ -60,14 +60,11 @@ def visualize_network(edges_info, min_trips=500, output_file='network_visualizat
     plt.savefig(output_file, format='png', dpi=300, bbox_inches='tight')
     plt.show()
 
-
 def flag_suspicious_purchases(csv_file_path, edges_info):
     df = pd.read_csv(csv_file_path)[:1000]
-    df['flagged'] = 0
-    counter = 0
+    suspicious_trips = set()
+
     for index, row in df.iterrows():
-        counter += 1
-        print(counter)
         source = row['departmentnumber']
         next_rows = df[(df['tripnumber'] == row['tripnumber']) & (df['purchasenumber'] == row['purchasenumber'] + 1)]
         if not next_rows.empty:
@@ -76,13 +73,17 @@ def flag_suspicious_purchases(csv_file_path, edges_info):
                 edge_data = edges_info[(source, next_dept)]
                 mean_time = edge_data['mean_time']
                 std_dev = np.sqrt(edge_data['variance_time'])
-                if row['timebetween'] > mean_time + 1.5 * std_dev:
-                    df.at[index, 'flagged'] = 1
+                if row['timebetween'] > mean_time + 2 * std_dev:
+                    suspicious_trips.add(row['tripnumber'])
+
+    # Mark all purchases in suspicious trips as flagged
+    df['flagged'] = df['tripnumber'].apply(lambda x: 1 if x in suspicious_trips else 0)
 
     return df
 
 edges_info = build_network('Data/supermarket_enhanced.csv')
 visualize_network(edges_info)
-#flagged_df = flag_suspicious_purchases('Data/supermarket_enhanced.csv', edges_info)
-#flagged_df.to_csv('Data/supermarket_flagged.csv', index=False)
+flagged_df = flag_suspicious_purchases('Data/supermarket_enhanced.csv', edges_info)
+flagged_df.to_csv('Data/supermarket_flagged.csv', index=False)
+
 
