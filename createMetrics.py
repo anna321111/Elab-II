@@ -172,3 +172,27 @@ with open('Data/metrics.csv', 'w', newline='') as csvfile:
     for row in existing_data:
         writer.writerow(row)
 
+
+# Read existing data from the CSV file
+existing_data = []
+with open('Data/metrics.csv', 'r', newline='') as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        existing_data.append(row)
+
+# Iterate through each row and add a new column for the division of "MCFU" and "UItems"
+for row in existing_data:
+    division_result = int(row['MCFU']) / int(row['UItems'])
+    row['Division'] = division_result
+
+# Write the modified data back to the CSV file
+with open('Data/metrics.csv', 'w', newline='') as csvfile:
+    fieldnames = ['Identifier', 'Time', 'Price', 'Items', 'MCFU', 'UItems', 'Division']  # Adding 'Division' as a fieldname
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+    # Write the header
+    writer.writeheader()
+
+    # Write each modified row
+    for row in existing_data:
+        writer.writerow(row)
