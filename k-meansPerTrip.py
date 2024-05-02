@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.impute import SimpleImputer
 
-def plot_clusters(data, labels, centroids):
+def plot_clusters(data, labels, centroids, output_file='Plots/clusters.png'):
     colors = plt.cm.get_cmap('viridis', max(labels) + 1)
     plt.figure(figsize=(10, 6))
     scatter = plt.scatter(data[:, 0], data[:, 1], c=labels, cmap=colors)
@@ -15,6 +15,7 @@ def plot_clusters(data, labels, centroids):
     plt.ylabel('Normalized Price')
     plt.colorbar(scatter, spacing='proportional', ticks=range(max(labels) + 1), label='Cluster ID')
     plt.legend()
+    plt.savefig(output_file, format='png', dpi=300, bbox_inches='tight')
     plt.show()
 
 def load_and_process_data(csv_filename):
@@ -27,7 +28,7 @@ def load_and_process_data(csv_filename):
     cleaned_data = imputer.fit_transform(np_data)
     return cleaned_data
 
-def plot_elbow_method(data):
+def plot_elbow_method(data, output_file='Plots/elbow.png'):
     wcss = []
     for i in range(1, 11):
         kmeans = KMeans(n_clusters=i, random_state=42)
@@ -40,15 +41,14 @@ def plot_elbow_method(data):
     plt.ylabel('WCSS')
     plt.xticks(range(1, 11))
     plt.grid(True)
+    plt.savefig(output_file, format='png', dpi=300, bbox_inches='tight')
     plt.show()
 
 # Example usage
 data = load_and_process_data('supermarket_normalized_subset.csv')
-print(data)
 if data.size > 0:
-    plot_elbow_method(data)  # Plotting the elbow curve
-    kmeans = KMeans(n_clusters=3, random_state=42).fit(data)  # Example with 2 clusters, adjust based on elbow plot
-    plot_clusters(data, kmeans.labels_, kmeans.cluster_centers_)
+    plot_elbow_method(data, 'Plots/elbow_plot.png')  # Plotting and saving the elbow curve
+    kmeans = KMeans(n_clusters=3, random_state=42).fit(data)  # Example with 3 clusters, adjust based on elbow plot
+    plot_clusters(data, kmeans.labels_, kmeans.cluster_centers_, 'Plots/cluster_plot.png')  # Plotting and saving the clusters
 else:
     print("No data to cluster.")
-
