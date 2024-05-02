@@ -134,5 +134,41 @@ path_counts_df = path_counts_df.sort_values(by='Count', ascending=False)
 path_counts_df.to_csv('Data/common_paths.csv', index=False)
 
 
+# Read the CSV file into a pandas DataFrame
+df = pd.read_csv('Data/supermarket_enhanced.csv', header=None, skiprows=1)
 
+# Rename columns for clarity
+df.columns = ['Identifier', 'Column2', 'Integer', 'Column4', 'Column5']
+
+# Group by 'Identifier' and count unique values in 'Integer' column
+unique_counts = df.groupby('Identifier')['Integer'].nunique().reset_index()
+
+# Create a dictionary to store the counts for each identifier
+counts_dict = dict(zip(unique_counts['Identifier'], unique_counts['Integer']))
+
+# Read existing data from the CSV file
+existing_data = []
+with open('Data/metrics.csv', 'r', newline='') as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        existing_data.append(row)
+
+# Modify the existing rows to include the new data
+for row_number, row in enumerate(existing_data, start=1):
+    identifier = row_number
+    count = counts_dict.get(identifier, 0)
+    row['UItems'] = count
+
+
+# Write the modified data back to the CSV file
+with open('Data/metrics.csv', 'w', newline='') as csvfile:
+    fieldnames = ['Identifier', 'Time', 'Price', 'Items', 'MCFU', 'UItems']  # Adding 'Identifier' as a fieldname
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+    # Write the header
+    writer.writeheader()
+
+    # Write each modified row
+    for row in existing_data:
+        writer.writerow(row)
 
