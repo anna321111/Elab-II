@@ -71,7 +71,7 @@ def normalize_and_sample_json(input_filename, output_filename, sample_size):
 
 
 # Uncomment these lines to execute the processing and normalization steps
-input_filename = 'supermarket.csv'
+input_filename = 'supermarket_fixed2.csv'
 output_filename1 = 'supermarketjson.json'
 output_filename2 = 'supermarketjsonnormal.json'
 process_csv_to_json(input_filename, output_filename1)
