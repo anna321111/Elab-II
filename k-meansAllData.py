@@ -1,9 +1,14 @@
+import matplotlib
+matplotlib.use('Qt5Agg')
+
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
 from yellowbrick.cluster import SilhouetteVisualizer
 from sklearn.metrics import silhouette_score
+from mpl_toolkits.mplot3d import Axes3D
+
 
 def plot_clusters(data, labels, centroids):
     # Generate unique colors using a colormap
@@ -61,9 +66,39 @@ def plot_silhouette_method(data):
     for i, score in enumerate(avg_scores):
         print(f"Average silhouette score for {i + 2} clusters: {score}")
 
+def load_data2(csv_filename):
+    # Define the directory containing the CSV file
+    directory = 'Data'
+    csv_file_path = os.path.join(directory, csv_filename)
+    # Read the CSV file using pandas
+    data_df = pd.read_csv(csv_file_path, usecols=['Time', 'Price', 'Items', 'Division'])
+    # Convert the pandas DataFrame to a numpy array
+    data_array = data_df.to_numpy()
+    return data_array
+
+def plot_clusters3D(data, labels, centroids):
+    # Generate unique colors using a colormap
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection=Axes3D.name)
+
+    img = ax.scatter(data[:, 0], data[:, 1], data[:, 3], c=labels, cmap=plt.hot())
+    fig.colorbar(img)
+    plt.title('Clusters and Centroids')
+    ax.set_xlabel('Time Spent')
+    ax.set_ylabel('Price')
+    ax.set_zlabel('MCFU')
+    plt.colorbar(img, spacing='proportional', ticks=range(max(labels) + 1), label='Cluster ID')
+    plt.legend()
+    # rotate the axes and update
+    for angle in range(0, 360, 10):
+        ax.view_init(10, azim = angle)
+        plt.draw()
+        plt.pause(.001)
+    plt.show()
 
 # Example usage
 data = load_data('supermarket_normalized_subset.csv')
+
 if data.size > 0:
     plot_elbow_method(data)  # Plotting the elbow curve to find optimal number of clusters
     plot_silhouette_method(data)  # Plotting silhouette scores for different cluster sizes
@@ -73,4 +108,11 @@ if data.size > 0:
 else:
     print("No data to cluster.")
 
-
+data2 = load_data2('metrics.csv')
+if data.size > 0:
+    plot_elbow_method(data2)
+    optimal_clusters = 4  # Replace this with the number from the elbow plot if different
+    kmeans2 = KMeans(n_clusters=optimal_clusters, random_state=42).fit(data2)
+    plot_clusters3D(data2, kmeans2.labels_, kmeans2.cluster_centers_)
+else:
+    print("No data to cluster.")

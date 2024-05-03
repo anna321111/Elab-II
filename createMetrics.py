@@ -122,7 +122,7 @@ all_paths = original_df.groupby(0)[2].apply(tuple).tolist()
 path_counts = Counter(all_paths)
 
 # Filter out paths with counter less than 6
-filtered_paths = {path: count for path, count in path_counts.items() if count >= 6}
+filtered_paths = {path: count for path, count in path_counts.items() }
 
 # Convert the filtered paths to a DataFrame
 path_counts_df = pd.DataFrame(list(filtered_paths.items()), columns=['Path', 'Count'])
@@ -162,7 +162,7 @@ for row_number, row in enumerate(existing_data, start=1):
 
 # Write the modified data back to the CSV file
 with open('Data/metrics.csv', 'w', newline='') as csvfile:
-    fieldnames = ['Identifier', 'Time', 'Price', 'Items', 'MCFU', 'UItems']  # Adding 'Identifier' as a fieldname
+    fieldnames = ['Time', 'Price', 'Items', 'MCFU', 'UItems']  # Adding 'Identifier' as a fieldname
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
     # Write the header
@@ -187,7 +187,7 @@ for row in existing_data:
 
 # Write the modified data back to the CSV file
 with open('Data/metrics.csv', 'w', newline='') as csvfile:
-    fieldnames = ['Identifier', 'Time', 'Price', 'Items', 'MCFU', 'UItems', 'Division']  # Adding 'Division' as a fieldname
+    fieldnames = ['Time', 'Price', 'Items', 'MCFU', 'UItems', 'Division']  # Adding 'Division' as a fieldname
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
     # Write the header
