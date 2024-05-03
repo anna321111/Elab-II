@@ -93,9 +93,3 @@ class FraudDetectionNetwork:
         updated_predictions_df = self.flag_suspicious_purchases('Data/TestFileFormatted.csv')
         updated_predictions_df.to_csv('Data/predictions_flagged.csv', index=False)
         return updated_predictions_df
-
-# Usage:
-predictions_df = pd.DataFrame({'tripnumber': range(1, 1001)})  # Example DataFrame initialization
-detector = FraudDetectionNetwork('Data/supermarket_enhanced.csv', predictions_df)
-result_df = detector.run()
-print(result_df.groupby('Network').count())
