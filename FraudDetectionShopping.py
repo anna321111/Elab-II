@@ -5,13 +5,14 @@ from sklearn.cluster import KMeans
 from scipy.stats import zscore
 
 class FraudDetectionShopping:
-    def __init__(self, train_file_path, test_file_path, predictions_df, n_clusters=3):
+    def __init__(self, train_file_path, test_file_path, predictions_df, n_clusters=3, fraud_threshold_percent=84.2):
         self.train_file_path = train_file_path
         self.test_file_path = test_file_path
-        self.predictions_df = predictions_df  # Now taken as an input parameter
+        self.predictions_df = predictions_df
         self.n_clusters = n_clusters
         self.scaler = StandardScaler()
         self.kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+        self.fraud_threshold_percent = fraud_threshold_percent  # New class variable for dynamic threshold setting
 
     def compute_features(self, df):
         items_per_trip = df.groupby('tripnumber').size().rename('items_per_trip')
@@ -36,7 +37,9 @@ class FraudDetectionShopping:
         self.cluster_data_test['cluster'] = self.kmeans.predict(self.cluster_data_test[['items_per_trip', 'time_variability', 'time_density']])
         distances = self.kmeans.transform(self.cluster_data_test[['items_per_trip', 'time_variability', 'time_density']])
         min_distances = distances.min(axis=1)
-        threshold = np.percentile(min_distances, 84.2)
+
+        # Set fraud threshold using the new class variable
+        threshold = np.percentile(min_distances, self.fraud_threshold_percent)
         self.cluster_data_test['Shopping'] = (min_distances > threshold).astype(int)
 
         # Merge results back to the predictions dataframe
@@ -48,4 +51,10 @@ class FraudDetectionShopping:
         self.fit()
         self.predict()
         return self.predictions_df
+
+# Example usage of the class with a specific fraud threshold
+fd_shopping = FraudDetectionShopping('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', pd.DataFrame({'tripnumber': range(1000, 2000)}), n_clusters=3, fraud_threshold_percent=84.2)
+predictions = fd_shopping.run()
+print(predictions)
+
 

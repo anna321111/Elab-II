@@ -1,16 +1,17 @@
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-import numpy as np
 
 class FraudDetectionSpending:
-    def __init__(self, train_file_path, test_file_path, predictions_df, n_clusters=3):
+    def __init__(self, train_file_path, test_file_path, predictions_df, n_clusters=3, fraud_threshold_percent=84.3):
         self.train_file_path = train_file_path
         self.test_file_path = test_file_path
         self.predictions_df = predictions_df
         self.n_clusters = n_clusters
         self.scaler = StandardScaler()
         self.kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+        self.fraud_threshold_percent = fraud_threshold_percent  # New class variable for dynamic threshold setting
 
     def compute_features(self, df):
         total_spend = df.groupby('tripnumber')['price'].sum().rename('total_spend_per_trip')
@@ -39,8 +40,8 @@ class FraudDetectionSpending:
         distances = self.kmeans.transform(self.cluster_data_test[['total_spend_per_trip', 'average_price_per_item', 'price_range']])
         min_distances = distances.min(axis=1)
 
-        # Set fraud threshold
-        threshold = np.percentile(self.kmeans.transform(self.cluster_data_train[['total_spend_per_trip', 'average_price_per_item', 'price_range']]).min(axis=1), 84.3)
+        # Set fraud threshold using the new class variable
+        threshold = np.percentile(min_distances, self.fraud_threshold_percent)
         self.cluster_data_test['k-meansSpending'] = (min_distances > threshold).astype(int)
 
         # Update predictions_df
@@ -51,5 +52,7 @@ class FraudDetectionSpending:
         self.fit()
         self.predict()
         return self.predictions_df
+
+
 
 

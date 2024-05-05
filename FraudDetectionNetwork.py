@@ -5,9 +5,10 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 class FraudDetectionNetwork:
-    def __init__(self, csv_file_path, predictions_df):
+    def __init__(self, csv_file_path, predictions_df, std_dev_multiplier=4):
         self.csv_file_path = csv_file_path
         self.predictions_df = predictions_df
+        self.std_dev_multiplier = std_dev_multiplier  # New class variable for dynamic setting
         self.edges_info = self.build_network()
 
     def build_network(self):
@@ -77,7 +78,8 @@ class FraudDetectionNetwork:
                     edge_data = self.edges_info[(source, next_dept)]
                     mean_time = edge_data['mean_time']
                     std_dev = np.sqrt(edge_data['variance_time'])
-                    if row['timebetween'] > mean_time + 4 * std_dev:
+                    # Use the dynamically set standard deviation multiplier
+                    if row['timebetween'] > mean_time + self.std_dev_multiplier * std_dev:
                         suspicious_trips.add(row['tripnumber'])
 
         df['flagged'] = df['tripnumber'].apply(lambda x: 1 if x in suspicious_trips else 0)

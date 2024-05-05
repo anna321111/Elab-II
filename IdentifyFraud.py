@@ -4,52 +4,61 @@ from FraudDetectionShopping import FraudDetectionShopping  # Assuming the code a
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-# Assuming you've already defined FraudDetectionNetwork, FraudDetectionSpending, and FraudDetectionShopping classes.
+from sklearn.metrics import matthews_corrcoef
 
-def get_suspicious_trip_numbers(predictions_df, method_column):
-    # This function now just returns a list of suspicious trip numbers
-    return predictions_df[predictions_df[method_column] == 1]['tripnumber'].tolist()
+# Run 1 domjudge: Network only
+# Run 2 domjudge: Spending only
+# Run 3 domjudge: Shopping only
+# Run 4 domjudge: Combined of Network, Spending and Shopping
+# Run 5 domjudge: Network only
+
+def get_suspicious_trip_numbers(predictions_df):
+    # Identify trips where any detection method has flagged the trip as suspicious
+    filtered_df = predictions_df[(predictions_df['Network'] == 1)]
+    return filtered_df['tripnumber'].unique().tolist()
+def compute_phi_matrix(df):
+    """Compute the Phi coefficient matrix for a binary DataFrame."""
+    columns = df.columns
+    phi_matrix = pd.DataFrame(index=columns, columns=columns, dtype=float)
+    for col1 in columns:
+        for col2 in columns:
+            if col1 == col2:
+                # The correlation of a variable with itself is always 1
+                phi_matrix.at[col1, col2] = 1.0
+            else:
+                # Compute Matthews correlation coefficient, which is equivalent to the Phi coefficient
+                phi_matrix.at[col1, col2] = matthews_corrcoef(df[col1], df[col2])
+    return phi_matrix
 
 def main():
     # Create a DataFrame as an example
-    predictions_df = pd.DataFrame({'tripnumber': range(2000, 2999)})
+    predictions_df = pd.DataFrame({'tripnumber': range(3000, 3999)})
 
     # Run the network-based fraud detection
-    network_detector = FraudDetectionNetwork('Data/supermarket_enhanced.csv', predictions_df)
+    network_detector = FraudDetectionNetwork('Data/supermarket_enhanced.csv', predictions_df, std_dev_multiplier=4.4)
     predictions_df = network_detector.run()
 
     # Run the k-means-based fraud detection
-    k_means_detector = FraudDetectionSpending('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df)
-    predictions_df = k_means_detector.run()
+    #k_means_detector = FraudDetectionSpending('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df, n_clusters=3, fraud_threshold_percent=98.7)
+    #predictions_df = k_means_detector.run()
 
     # Run the shopping behavior-based fraud detection
-    shopping_detector = FraudDetectionShopping('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df)
-    predictions_df = shopping_detector.run()
+    #shopping_detector = FraudDetectionShopping('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df, n_clusters=3, fraud_threshold_percent=98.7)
+    #predictions_df = shopping_detector.run()
 
-    # Retrieve suspicious trip numbers without altering the original DataFrame
-    suspicious_network_trips = get_suspicious_trip_numbers(predictions_df, 'Network')
-    suspicious_kmeans_trips = get_suspicious_trip_numbers(predictions_df, 'KMeans')
-    suspicious_shopping_trips = get_suspicious_trip_numbers(predictions_df, 'Shopping')
+    # Retrieve suspicious trip numbers that are flagged by any method
+    suspicious_trips = get_suspicious_trip_numbers(predictions_df)
+    print("Total number of suspicious trips across any method:", len(suspicious_trips))
+    for trip in suspicious_trips:
+        print(trip)
 
-    # Print suspicious trips for each method
-    print("Suspicious Trips from Network-Based Detection:")
-    for trip_number in suspicious_network_trips[:150]:
-        print(trip_number)
+    # Calculate the Phi coefficient matrix for the binary DataFrame
+    phi_matrix = compute_phi_matrix(predictions_df[['Network']])
 
-    print("\nSuspicious Trips from K-Means-Based Detection:")
-    print(len(suspicious_kmeans_trips))
-    for trip_number in suspicious_kmeans_trips[:150]:
-        print(trip_number)
-
-    print("\nSuspicious Trips from Shopping-Based Detection:")
-    print(len(suspicious_shopping_trips))
-    for trip_number in suspicious_shopping_trips[:150]:
-        print(trip_number)
-
-    # Generate a correlation heatmap
+    # Generate a correlation heatmap using the Phi coefficient matrix
     plt.figure(figsize=(10, 8))
-    sns.heatmap(predictions_df.corr(), annot=True, fmt=".2f", cmap='coolwarm')
-    plt.title('Correlation Heatmap of Fraud Detection Methods')
+    sns.heatmap(phi_matrix, annot=True, fmt=".2f", cmap='coolwarm', vmin=-1, vmax=1)
+    plt.title('Phi Coefficient Matrix of Fraud Detection Methods')
     plt.show()
 
     # Save the updated predictions DataFrame to CSV
