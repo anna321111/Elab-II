@@ -1,6 +1,8 @@
 from FraudDetectionNetwork import FraudDetectionNetwork
 from FraudDetectionSpending import FraudDetectionSpending
 from FraudDetectionShopping import FraudDetectionShopping  # Assuming the code above is saved in a FraudDetectionShopping.py file
+from FraudDetectionCommon import FraudDetectionCommon
+
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -39,12 +41,16 @@ def main():
     predictions_df = network_detector.run()
 
     # Run the k-means-based fraud detection
-    #k_means_detector = FraudDetectionSpending('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df, n_clusters=3, fraud_threshold_percent=98.7)
-    #predictions_df = k_means_detector.run()
+    k_means_detector = FraudDetectionSpending('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df, n_clusters=3, fraud_threshold_percent=98.7)
+    predictions_df = k_means_detector.run()
 
     # Run the shopping behavior-based fraud detection
-    #shopping_detector = FraudDetectionShopping('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df, n_clusters=3, fraud_threshold_percent=98.7)
-    #predictions_df = shopping_detector.run()
+    shopping_detector = FraudDetectionShopping('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df, n_clusters=3, fraud_threshold_percent=98.7)
+    predictions_df = shopping_detector.run()
+
+    # Run the common fraud detection method
+    common_detector = FraudDetectionCommon('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df, n_clusters=4, fraud_threshold_percent=98.7)
+    predictions_df = common_detector.run()
 
     # Retrieve suspicious trip numbers that are flagged by any method
     suspicious_trips = get_suspicious_trip_numbers(predictions_df)
