@@ -1,18 +1,18 @@
 from FraudDetectionNetwork import FraudDetectionNetwork
 from FraudDetectionSpending import FraudDetectionSpending
 from FraudDetectionShopping import FraudDetectionShopping  # Assuming the code above is saved in a FraudDetectionShopping.py file
-from FraudDetectionCommon import FraudDetectionCommon
+
 
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.metrics import matthews_corrcoef
 
-# Run 1 domjudge: Network only
-# Run 2 domjudge: Spending only
-# Run 3 domjudge: Shopping only
-# Run 4 domjudge: Combined of Network, Spending and Shopping
-# Run 5 domjudge: Network only
+# Run 4-8 domjudge: Network only
+# Run 9-13 domjudge: Spending only
+# Run 14-18 domjudge: Shopping only
+# Run 18-22 domjudge: Common only
+
 
 def get_suspicious_trip_numbers(predictions_df):
     # Identify trips where any detection method has flagged the trip as suspicious
@@ -34,28 +34,27 @@ def compute_phi_matrix(df):
 
 def main():
     # Create a DataFrame as an example
-    predictions_df = pd.DataFrame({'tripnumber': range(3000, 3999)})
+    predictions_df = pd.DataFrame({'tripnumber': range(7000, 7999)})
 
     # Run the network-based fraud detection
-    network_detector = FraudDetectionNetwork('Data/supermarket_enhanced.csv', predictions_df, std_dev_multiplier=4.4)
-    predictions_df = network_detector.run()
+    #network_detector = FraudDetectionNetwork('Data/supermarket_enhanced.csv', predictions_df, std_dev_multiplier=4.2)
+    #predictions_df = network_detector.run()
 
     # Run the k-means-based fraud detection
-    k_means_detector = FraudDetectionSpending('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df, n_clusters=3, fraud_threshold_percent=98.7)
-    predictions_df = k_means_detector.run()
+    #spending_detector = FraudDetectionSpending('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df, n_clusters=3, fraud_threshold_percent=98.7)
+    #predictions_df = spending_detector.run()
 
     # Run the shopping behavior-based fraud detection
-    shopping_detector = FraudDetectionShopping('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df, n_clusters=3, fraud_threshold_percent=98.7)
-    predictions_df = shopping_detector.run()
+    ##predictions_df = shopping_detector.run()
 
     # Run the common fraud detection method
-    common_detector = FraudDetectionCommon('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df, n_clusters=4, fraud_threshold_percent=98.7)
-    predictions_df = common_detector.run()
+    #common_detector = FraudDetectionCommon('Data/supermarket_enhanced.csv', 'Data/TestFileFormatted.csv', predictions_df, n_clusters=4, fraud_threshold_percent=98.7)
+    #predictions_df = common_detector.run()
 
     # Retrieve suspicious trip numbers that are flagged by any method
     suspicious_trips = get_suspicious_trip_numbers(predictions_df)
     print("Total number of suspicious trips across any method:", len(suspicious_trips))
-    for trip in suspicious_trips:
+    for trip in suspicious_trips[:150]:
         print(trip)
 
     # Calculate the Phi coefficient matrix for the binary DataFrame
