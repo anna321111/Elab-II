@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-from createMetrics import find_most_common_follow_up
 import json
+from collections import Counter
 
 class FraudDetectionCommon:
     def __init__(self, train_file_path, test_file_path, predictions_df, n_clusters=4, fraud_threshold_percent=84.3):
@@ -22,18 +22,24 @@ class FraudDetectionCommon:
         unique_departments_visited = df.groupby('tripnumber')['departmentnumber'].nunique().rename('unique_departments_per_trip')
         with open('Data/supermarketjson.json') as f:
             data = json.load(f)
-            mcfu_dict = find_most_common_follow_up(data)
+
+        mcfu_dict = self.find_most_common_follow_up(data)
 
         def count_follow_ups(group):
-            counts = {}
-            for key, value in mcfu_dict.items():
-                department_counts = group[group == key].shift(-1).eq(value).sum()
-                if department_counts > 0:
-                    counts[key] = department_counts
-            return counts
+            total_follow_ups = 0
+            for i in range(len(group) - 1):
+                current_department = group.iloc[i]
+                # Check if the current department has a common follow-up defined in mcfu_dict
 
-        MCFU = (df.groupby('tripnumber')['departmentnumber'].apply(count_follow_ups)/unique_departments_visited).rename('MCFU')
+                common_follow_up = mcfu_dict[current_department]
+                # Check if the next department number is the common follow-up
+                if group.iloc[i + 1] == common_follow_up:
+                     total_follow_ups += 1
+            return total_follow_ups
 
+
+        MCFU = df.groupby('tripnumber')['departmentnumber'].apply(count_follow_ups)
+        MCFU = (MCFU / unique_departments_visited).rename('MCFU')
         return pd.concat([total_spend, total_time, items_per_trip, MCFU], axis=1).reset_index()
 
     def preprocess_data(self):
@@ -52,6 +58,7 @@ class FraudDetectionCommon:
         self.kmeans.fit(self.cluster_data_train[['total_spend_per_trip', 'total_time_per_trip', 'items_per_trip', 'MCFU']])
 
     def predict(self):
+        print("predict")
         # Predict clusters and calculate distances for the test set
         self.cluster_data_test['cluster'] = self.kmeans.predict(self.cluster_data_test[['total_spend_per_trip', 'total_time_per_trip', 'items_per_trip', 'MCFU']])
         distances = self.kmeans.transform(self.cluster_data_test[['total_spend_per_trip', 'total_time_per_trip', 'items_per_trip', 'MCFU']])
@@ -62,10 +69,35 @@ class FraudDetectionCommon:
         self.cluster_data_test['k-meansCommon'] = (min_distances > threshold).astype(int)
 
         # Update predictions_df
-        self.predictions_df['KMeans'] = self.predictions_df['tripnumber'].map(self.cluster_data_test.set_index('tripnumber')['k-meansCommon']).fillna(0)
+        self.predictions_df['Common'] = self.predictions_df['tripnumber'].map(self.cluster_data_test.set_index('tripnumber')['k-meansCommon']).fillna(0)
 
     def run(self):
         self.preprocess_data()
         self.fit()
         self.predict()
         return self.predictions_df
+
+    @staticmethod
+    def find_most_common_follow_up(data):
+        follow_ups = {i: Counter() for i in range(1, 19)}
+
+        # Iterate over each row in the JSON data
+        for row in data:
+            for i in range(len(row) - 1):
+                if row[i] and row[i + 1]:
+                    current_id = row[i][0]
+                    follow_up_id = row[i + 1][0]
+                    if current_id != follow_up_id:
+                        follow_ups[current_id][follow_up_id] += 1
+
+        most_common_follow_up = {}
+        # Find the most common follow-up for each identifier
+        for identifier, follow_up_counter in follow_ups.items():
+            if follow_up_counter:
+                most_common_follow_up[identifier] = follow_up_counter.most_common(1)[0][0]
+            else:
+                most_common_follow_up[identifier] = None
+        return most_common_follow_up
+
+
+
