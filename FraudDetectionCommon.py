@@ -30,11 +30,12 @@ class FraudDetectionCommon:
             for i in range(len(group) - 1):
                 current_department = group.iloc[i]
                 # Check if the current department has a common follow-up defined in mcfu_dict
-
                 common_follow_up = mcfu_dict[current_department]
                 # Check if the next department number is the common follow-up
                 if group.iloc[i + 1] == common_follow_up:
                      total_follow_ups += 1
+                elif group.iloc[i + 1] == current_department:
+                    total_follow_ups += 0.1
             return total_follow_ups
 
 
