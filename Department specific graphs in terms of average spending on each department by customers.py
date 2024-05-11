@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
+import pyperclip
 
 # Import the enhanced csv data
 
-df = pd.read_csv('Data/supermarket_enhanced.csv')
+
 
 
 
@@ -12,12 +13,29 @@ df = pd.read_csv('Data/supermarket_enhanced.csv')
 
 def subset_data(df, department):
     temp = df[df['departmentnumber'] == department]
-    aggregated_data = temp.groupby('tripnumber').agg({'timebetween': 'sum', 'price': 'sum', 'purchasenumber': 'first'}).reset_index()
+    aggregated_data = temp.groupby('tripnumber').agg({'timebetween': ['sum', 'max', 'min', 'mean'],'price': ['sum', 'max', 'min', 'mean'], 'purchasenumber': 'first'}).reset_index()
     aggregated_data['count'] = temp.groupby('tripnumber').size().reset_index(name='count')['count']
     return aggregated_data
 
 
+def sample_data(df: pd.DataFrame, name):
+    # Assuming the trip numbers are strings in the DataFrame, if they are not integers
+    sampled_trip_numbers = df.iloc[1:, 0].sample(n=150, random_state=69420)
+
+    # Convert the sampled trip numbers to string
+    sampled_trip_numbers = sampled_trip_numbers.astype(str)
+
+    sampled_trip_numbers_str = sampled_trip_numbers.to_string(index=False)
+
+    # Copy the string to the clipboard
+    pyperclip.copy(sampled_trip_numbers_str)
+
+    # Save the sampled trip numbers to CSV
+    sampled_trip_numbers.to_csv(f'Data/Samples/sampled_{name}', index=False)
+
+
 if __name__ == '__main__':
+
 
     department_names = {
         1: "bakery&pastry", 2: "beer&Wine", 3: "books&magazines", 4: "candy&chips",
@@ -27,9 +45,16 @@ if __name__ == '__main__':
         17: "specialDiet", 18: "vegetarian&vegan"
     }
 
+
+
+
     departments = range(1, 19)
 
-    for department in departments:
-        data = subset_data(df, department)
-        department_name = department_names[department]
-        data.to_csv(f'Data/Aggregated/{department_name}.csv', index=False)
+
+    df = pd.read_csv('Data/case47Formatted.csv')
+    data = subset_data(df, 18)
+    department_name = department_names[18]
+    sample_data(data, f'{department_names[18]}')
+    data.to_csv(f'Data/Aggregated/{department_name}.csv', index=False)
+        
+
