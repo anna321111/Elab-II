@@ -45,7 +45,7 @@ class FraudDetectionSpending:
         self.cluster_data_test['k-meansSpending'] = (min_distances > threshold).astype(int)
 
         # Update predictions_df
-        self.predictions_df['KMeans'] = self.predictions_df['tripnumber'].map(self.cluster_data_test.set_index('tripnumber')['k-meansSpending']).fillna(0)
+        self.predictions_df['Spending'] = self.predictions_df['tripnumber'].map(self.cluster_data_test.set_index('tripnumber')['k-meansSpending']).fillna(0)
 
     def run(self):
         self.preprocess_data()
