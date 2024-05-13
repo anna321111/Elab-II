@@ -1,0 +1,154 @@
+---
+title: "Visualizations2"
+author: "Sofia Lambertini"
+date: "2024-04-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)    
+library(corrplot)
+library(ggplot2)
+library(reshape2)
+```
+
+```{r}
+dataset <- read.csv(file = "C:/Users/sofia/Downloads/supermarket_normalized_subset.csv", , 
+                     stringsAsFactors=TRUE)
+
+```
+
+```{r}
+View(dataset)
+```
+
+Mean for each variable
+-	Median + sd + quantiles
+```{r}
+mean(dataset$timebetween)
+sd(dataset$timebetween)
+mean(dataset$price)
+sd(dataset$price)
+```
+- Transaction frequency by department
+```{r}
+ggplot(dataset, aes(x = factor(departmentnumber))) +
+  geom_bar(fill="steelblue") +
+  labs(title = "Transaction Frequency by Department",
+       x = "Department Number",
+       y = "Frequency")
+
+```
+ Departments such as fruit and vegetables, cereals and spreads,and sauces and spices show higher transaction frequencies. High volumes could be typical for these departments due to the nature of the goods or services they provide. However, unusually high activity relative to typical patterns might suggest over-reporting of sales or other fraudulent activities.These departments could be more susceptible to fraudulent activities due to the volume of transactions. It is important to monitor these departments closely for any anomalies or deviations from typical transaction patterns that could indicate fraud.
+ - Normalized density curves:
+```{r}
+# Normalized Density Curve for 'timebetween'
+ggplot(dataset, aes(x = timebetween)) + 
+  geom_density(fill="blue", alpha=0.5) +
+  labs(title="Normalized Density Curve of Time Between", x="Time Between", y="Density")
+
+# Normalized Density Curve for 'price'
+ggplot(dataset, aes(x = price)) + 
+  geom_density(fill="green", alpha=0.5) +
+  labs(title="Normalized Density Curve of Price", x="Price", y="Density")
+
+# Normalized Density Curve for 'purchasenumber'
+ggplot(dataset, aes(x = purchasenumber)) + 
+  geom_density(fill="red", alpha=0.5) +
+  labs(title="Normalized Density Curve of Items", x="Number of Purchases", y="Density")
+
+```
+
+-	individual Boxplots
+```{r}
+boxplot(dataset$price, main = "Price")
+```
+
+```{r}
+boxplot(dataset$timebetween, main = "Time Between")
+```
+
+- Histogram of price 
+
+```{r}
+# Histogram of 'price'
+ggplot(dataset, aes(x = price)) +
+  geom_histogram(bins = 30, fill = "green", color = "black") +
+  labs(title = "Histogram of Price", x = "Price", y = "Frequency")
+
+```
+
+The outliers in the price distribution could warrant further investigation to ensure these transactions are legitimate. High-priced items might be more susceptible to fraud as they represent less common transactions, such as price manipulation (swiching price tags) or mis-scanning. 
+
+Boxplots for Time Between by Department:
+```{r}
+boxplot(timebetween ~ departmentnumber, data=dataset, main="Time Between Departments by Department Number", xlab="Department Number", ylab="Time Between (Normalized)")
+
+```
+some departments like 8 (Dairy and Eggs) and 16 (Soda and Juices) have noticeably higher median times, which might be due to the larger size of the department, the layout, or the nature of the products.
+Departments with frequent high outliers such as  7(Cheese and Tapas), 15(Sauces and Spices ) might indicate delays caused by various factors such as crowded aisles, frequently moved goods, or potential suspicious activities. High outliers could suggest that individuals are taking unusually long paths possibly to avoid surveillance or to engage in secretive discussions or actions.
+
+Significantly low times, for example in departments 3(Books and Magazines), 5(Care and Hygiene)) could indicate that transactions or products are being bypassed or rapidly moved through areas with minimal scrutiny—potentially to avoid detection in high-theft categories.
+
+Departments like 8(Dairy and Eggs 9) and 16(Soda and Juices) not only have a higher median time but also show greater variability. This could suggest operational inefficiencies or manipulation areas where fraudulent activities are easier to conduct due to less predictable customer flow.
+
+- Scatter Plot of Time Between vs. Price
+
+```{r}
+plot(dataset$timebetween, dataset$price, main="Scatter Plot of Time Between vs. Price", xlab="Time Between (Normalized)", ylab="Price (Normalized)")
+
+```
+The majority of data points are clustered at the lower end of both axes, indicating that most transactions involve items at lower normalized prices and shorter times spent moving between departments.
+
+High Prices with Short Time Intervals: Data points that show high prices but very short time intervals could be suspicious. This might indicate "grab and go" theft where high-value items are taken without proper scanning or checkout
+
+High Prices with Long Time Intervals: Conversely, high-priced items with long time intervals between departments could suggest deliberate actions like price tag switching, where more time is taken to manipulate the product or its pricing before proceeding to checkout.
+
+Notable outliers, particularly those far from the main cluster (high price, high time), should be examined closely. These could be instances of unusual shopper behavior or anomalies in data entry, pricing, or scanning that could be linked to fraudulent activities.
+
+```{r}
+
+# Visualization 2: Price Distribution by Department
+ggplot(dataset, aes(x=factor(departmentnumber), y=price)) +
+  geom_boxplot() +
+  labs(title="Price Distribution by Department", x="Department Number", y="Normalized Price")
+
+# Visualization 3: Time Between Purchases by Department
+ggplot(dataset, aes(x=factor(departmentnumber), y=timebetween)) +
+  geom_boxplot() +
+  labs(title="Time Between Purchases by Department", x="Department Number", y="Time Between (Normalized)")
+
+
+```
+
+-	Correlation analysis
+everything
+```{r}
+num<-dplyr::select(dataset, timebetween, price, departmentnumber, purchasenumber, tripnumber )
+M <- cor(num)
+corrplot(M, method="circle")
+
+
+```
+
+- correlation between departmentnumber and purchasenumber: a strong correlation here could suggest that fraud attempts might be clustered within specific departments or involve multiple items from the same department.
+ There seems to be a notable correlation between the price of an item and the time between purchases. If this correlation was positive,this shows higher prices might correspond with longer intervals between purchases, potentially indicating cautious behavior often associated with fraud.
+ 
+-	Regression analysis
+```{r}
+model <- lm(departmentnumber ~ tripnumber + purchasenumber  + departmentnumber + timebetween, data = dataset)
+
+# Summary of the model to see results
+summary(model)
+```
+
+
+
+
+
+
+
